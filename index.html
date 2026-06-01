@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+<title>ViralClip AI — Preview</title>
+<!-- PWA / Android install support -->
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#07070d" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ViralClip AI" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<link rel="icon" type="image/png" href="./icon-192.png" />
+<style>
+  :root{
+    --bg:#07070d; --glass:rgba(255,255,255,.05); --border:rgba(255,255,255,.1);
+    --brand:#6366f1; --brand2:#818cf8; --accent:#ec4899; --txt:#f1f1f5; --mut:rgba(255,255,255,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--bg);color:var(--txt);min-height:100vh;line-height:1.5;
+    /* Android/iOS notch + gesture-bar safe areas */
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-tap-highlight-color:transparent;
+    overscroll-behavior-y:contain;
+  }
+  /* Bigger touch targets on phones */
+  button{touch-action:manipulation}
+  @media(max-width:640px){
+    button,.chip,.swatch{min-height:40px}
+    .inputbar input{font-size:16px} /* prevents iOS/Android zoom-on-focus */
+  }
+  /* Install App button */
+  .install-btn{display:none;align-items:center;gap:6px;border:none;cursor:pointer;
+    border-radius:99px;padding:8px 16px;font-weight:700;font-size:13px;color:#fff;
+    background:linear-gradient(90deg,var(--brand),var(--accent));
+    box-shadow:0 6px 18px rgba(99,102,241,.35)}
+  .install-btn.show{display:inline-flex}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;background:
+    radial-gradient(60% 50% at 15% 10%,rgba(99,102,241,.20),transparent 60%),
+    radial-gradient(50% 50% at 90% 0%,rgba(236,72,153,.16),transparent 55%),
+    radial-gradient(60% 60% at 50% 110%,rgba(56,189,248,.13),transparent 60%);}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 16px 80px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+  .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px}
+  .logo .badge{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;
+    background:linear-gradient(135deg,var(--brand),var(--accent));font-size:16px}
+  .brand{color:var(--brand2)}
+  .glass{background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(18px)}
+  .card{background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(18px);border-radius:18px;padding:18px}
+  .muted{color:var(--mut)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;
+    border-radius:12px;padding:12px 18px;font-weight:600;color:#fff;
+    background:linear-gradient(90deg,var(--brand),var(--accent));box-shadow:0 10px 30px rgba(99,102,241,.3);
+    transition:transform .15s} .btn:hover{transform:scale(1.02)} .btn:active{transform:scale(.96)}
+  .btn.w{width:100%}
+
+  /* hero */
+  .hero{text-align:center;padding-top:36px}
+  .pill{display:inline-flex;gap:8px;align-items:center;border-radius:99px;padding:6px 14px;font-size:12px;color:var(--mut)}
+  h1{font-size:clamp(34px,6vw,60px);font-weight:800;line-height:1.05;max-width:780px;margin:22px auto 0}
+  .grad{background:linear-gradient(90deg,#818cf8,#ec4899,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{max-width:560px;margin:18px auto 0;color:var(--mut)}
+  .inputbar{display:flex;gap:10px;max-width:640px;margin:34px auto 0;border-radius:18px;padding:8px}
+  .inputbar input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:12px 14px}
+  .inputbar input::placeholder{color:rgba(255,255,255,.4)}
+
+  /* features */
+  .feat{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:90px}
+  .feat .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:12px;
+    background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(236,72,153,.3));font-size:20px}
+
+  /* dashboard */
+  .dash{display:grid;gap:18px;grid-template-columns:330px 1fr 290px;margin-top:24px}
+  @media(max-width:1080px){.dash{grid-template-columns:1fr}}
+  h2{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .moment{width:100%;text-align:left;border:1px solid var(--border);background:rgba(255,255,255,.02);
+    border-radius:13px;padding:12px;margin-bottom:9px;cursor:pointer;transition:.15s;color:var(--txt)}
+  .moment:hover{background:rgba(255,255,255,.05)}
+  .moment.active{border-color:rgba(99,102,241,.6);background:rgba(99,102,241,.12)}
+  .row{display:flex;justify-content:space-between;align-items:center}
+  .sc{font-weight:800} .s90{color:#34d399}.s75{color:#a3e635}.s60{color:#fbbf24}.slow{color:#fb7185}
+  .mtitle{font-weight:600;font-size:14px;margin-top:4px}
+  .mreason{font-size:12px;color:var(--mut);margin-top:3px}
+  .tag{font-size:11px;color:var(--mut)}
+
+  /* phone preview */
+  .phone{position:relative;aspect-ratio:9/16;width:240px;margin:0 auto;border-radius:20px;overflow:hidden;
+    border:1px solid var(--border);background:linear-gradient(180deg,#475569,#0f172a)}
+  .subject{position:absolute;left:50%;top:26%;transform:translateX(-50%);font-size:54px}
+  .glow{position:absolute;left:50%;top:30%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;
+    background:rgba(255,255,255,.1);filter:blur(28px)}
+  .caps{position:absolute;left:0;right:0;display:flex;justify-content:center;padding:0 12px}
+  .caps.bottom{bottom:46px}.caps.middle{top:50%;transform:translateY(-50%)}.caps.top{top:34px}
+  .capbox{border-radius:9px;padding:5px 8px;text-align:center;line-height:1.15}
+  .word{display:inline-block;margin:0 2px;font-weight:800;font-size:17px;
+    -webkit-text-stroke:1px rgba(0,0,0,.7);text-shadow:0 2px 4px rgba(0,0,0,.6)}
+  .ratio{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.5);border-radius:6px;padding:2px 7px;font-size:10px;color:var(--mut)}
+  @keyframes pop{0%{transform:scale(.4);opacity:0}40%{transform:scale(1.25);opacity:1}100%{transform:scale(1)}}
+  @keyframes hl{0%,100%{color:var(--cap)}45%{color:var(--hl)}}
+  @keyframes bounce{0%{transform:translateY(8px);opacity:0}60%{transform:translateY(-5px);opacity:1}100%{transform:translateY(0)}}
+
+  /* score rings */
+  .rings{display:flex;flex-wrap:wrap;justify-content:space-around;gap:10px}
+  .ring{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .ring svg{transform:rotate(-90deg)} .ring .val{font-size:20px;font-weight:800}
+  .ring .lab{font-size:11px;color:var(--mut)}
+
+  /* duration pills + chips */
+  .pills{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:none;cursor:pointer;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:600;
+    background:rgba(255,255,255,.05);color:var(--mut);transition:.15s;text-transform:capitalize}
+  .chip:hover{background:rgba(255,255,255,.1)} .chip.on{background:var(--brand);color:#fff}
+  .lab2{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.4);margin:14px 0 7px}
+  .swatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.2);cursor:pointer}
+  .swatch.on{border-color:#fff}
+  .htag{background:rgba(99,102,241,.15);color:#a5b4fc;border-radius:7px;padding:2px 8px;font-size:11px;display:inline-block;margin:2px 2px 0 0}
+  .barwrap{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+  .bar{height:100%;background:linear-gradient(90deg,var(--brand),var(--accent));width:100%}
+  .note{font-size:12px;color:var(--mut);text-align:center;margin-top:10px}
+  .switch{display:flex;gap:8px;justify-content:center;margin:8px 0 20px}
+  .switch button{background:transparent;border:1px solid var(--border);color:var(--mut);border-radius:99px;padding:6px 16px;cursor:pointer;font-weight:600}
+  .switch button.on{background:#fff;color:#111;border-color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><span class="badge">🎬</span> ViralClip <span class="brand">AI</span></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="switch" style="margin:0">
+        <button id="tab-home" class="on" onclick="show('home')">Landing</button>
+        <button id="tab-dash" onclick="show('dash')">Dashboard</button>
+      </div>
+      <button id="installBtn" class="install-btn" onclick="installApp()">⬇️ Install App</button>
+    </div>
+  </header>
+
+  <!-- ───────────── LANDING ───────────── -->
+  <section id="home">
+    <div class="hero">
+      <span class="pill glass">✨ Free & open-source · Whisper · Ollama · FFmpeg</span>
+      <h1>Turn any YouTube video into <span class="grad">viral Shorts</span> in minutes.</h1>
+      <p class="sub">Paste a link. Our AI transcribes, finds the best moments, reframes to 9:16, adds animated captions, and exports ready-to-post clips.</p>
+      <div class="inputbar glass" style="backdrop-filter:blur(24px)">
+        <input placeholder="https://www.youtube.com/watch?v=..." value="https://youtu.be/dQw4w9WgXcQ"/>
+        <button class="btn" onclick="show('dash')">✨ Generate Viral Clips</button>
+      </div>
+      <p class="note">No sign-up required to try the demo.</p>
+    </div>
+
+    <div class="feat">
+      <div class="card"><div class="ic">✨</div><h2 style="margin:0">AI Viral Detection</h2><p class="muted" style="font-size:14px;margin-top:6px">Finds the top 10 most engaging moments with hook, emotion & retention scoring.</p></div>
+      <div class="card"><div class="ic">✂️</div><h2 style="margin:0">Auto Clipping</h2><p class="muted" style="font-size:14px;margin-top:6px">Generates 15s / 30s / 45s / 60s variants from every viral segment.</p></div>
+      <div class="card"><div class="ic">🪄</div><h2 style="margin:0">Auto Reframe 9:16</h2><p class="muted" style="font-size:14px;margin-top:6px">MediaPipe subject tracking keeps the speaker centered in vertical.</p></div>
+      <div class="card"><div class="ic">💬</div><h2 style="margin:0">Animated Subtitles</h2><p class="muted" style="font-size:14px;margin-top:6px">Karaoke, bounce, pop, zoom & highlight — fully customizable.</p></div>
+      <div class="card"><div class="ic">📱</div><h2 style="margin:0">Mobile-first PWA</h2><p class="muted" style="font-size:14px;margin-top:6px">Install on Android. Edit, preview & download anywhere.</p></div>
+      <div class="card"><div class="ic">⬇️</div><h2 style="margin:0">Multi-platform Export</h2><p class="muted" style="font-size:14px;margin-top:6px">Shorts, Reels, Facebook & TikTok in MP4/MOV up to 4K.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────── DASHBOARD ───────────── -->
+  <section id="dash" style="display:none">
+    <div class="card" style="margin-bottom:18px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:13px" class="muted">✅ Processing complete · <b style="color:#fff">How I Built a $1M Startup From My Bedroom</b></div>
+      <div style="flex:1;max-width:320px;margin-left:auto"><div class="barwrap"><div class="bar"></div></div></div>
+    </div>
+
+    <div class="dash">
+      <!-- moments -->
+      <div class="card">
+        <h2>✨ Viral Moments</h2>
+        <div id="moments"></div>
+      </div>
+
+      <!-- center -->
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div class="card">
+          <div class="row" style="margin-bottom:14px">
+            <h2 style="margin:0">▶️ Preview</h2>
+            <div class="pills" id="durations"></div>
+          </div>
+          <div class="phone">
+            <div class="glow"></div><div class="subject">🧑‍💻</div>
+            <div class="ratio">9:16</div>
+            <div class="caps bottom" id="caps"><div class="capbox" id="capbox"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>📊 Viral Score Panel</h2>
+          <div class="rings" id="rings"></div>
+        </div>
+
+        <div class="card">
+          <h2>📄 Transcript</h2>
+          <p class="muted" id="transcript" style="font-size:14px"></p>
+        </div>
+
+        <div class="card">
+          <h2># AI Content Kit</h2>
+          <div class="lab2">YouTube title</div><div id="yt" style="font-size:14px"></div>
+          <div class="lab2">Caption</div><div class="muted" id="cap" style="font-size:14px;white-space:pre-line"></div>
+          <div style="margin-top:10px" id="tags"></div>
+          <div style="margin-top:8px;font-size:18px" id="emoji"></div>
+        </div>
+      </div>
+
+      <!-- editor -->
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div class="card">
+          <h2>🔤 Subtitle Editor</h2>
+          <div class="lab2">Font</div><div class="pills" id="fonts"></div>
+          <div class="lab2">Effect</div><div class="pills" id="effects"></div>
+          <div class="lab2">Color</div><div class="pills" id="colors"></div>
+          <div class="lab2">Position</div><div class="pills" id="positions"></div>
+          <div class="lab2">Background</div><div class="pills" id="bgs"></div>
+        </div>
+        <div class="card">
+          <h2>🎨 Export Settings</h2>
+          <div class="lab2">Aspect ratio</div><div class="pills" id="ar"></div>
+          <div class="lab2">Resolution</div><div class="pills" id="res"></div>
+          <div class="lab2">Format</div><div class="pills" id="fmt"></div>
+          <button class="btn w" style="margin-top:16px" onclick="alert('Demo export ✅ — connect the FastAPI backend to render real files.')">⬇️ Export Clip</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ── mock data (mirrors frontend/src/lib/mock.ts) ──
+const moments=[
+ {id:'m1',start:42.5,end:73.2,scores:{viral:97,hook:95,engagement:94,retention:96},title:'The One Mistake That Cost Me $50K',reason:'Strong opening hook + curiosity gap about the one mistake everyone makes.',transcript:"Here's the truth nobody tells you. I lost fifty thousand dollars because of one mistake, and I'm going to show you exactly how to avoid it...",yt:'The One Mistake That Cost Me $50K #shorts',caption:'The One Mistake That Cost Me $50K 🔥\n\nSave this for later 📌'},
+ {id:'m2',start:311,end:339.4,scores:{viral:92,hook:91,engagement:90,retention:88},title:'The Night Everything Changed',reason:'Emotional intensity + fast pacing (182 wpm) during the breakthrough story.',transcript:"I remember the exact moment. It was 3am, I hadn't slept, and suddenly the numbers just... exploded. That was the night everything changed.",yt:'The Night Everything Changed #shorts',caption:'The Night Everything Changed 🚀\n\nSave this for later 📌'},
+ {id:'m3',start:905.7,end:950.1,scores:{viral:89,hook:84,engagement:87,retention:91},title:'The 3-Step Framework I Use',reason:'Suspense build-up and a clear, self-contained tactical lesson.',transcript:"So here's the framework. Step one, you validate before you build. Step two, you sell before you make it. And step three, this is the big one...",yt:'The 3-Step Framework I Use #shorts',caption:'The 3-Step Framework I Use 💯\n\nSave this for later 📌'},
+ {id:'m4',start:1422.3,end:1452,scores:{viral:86,hook:85,engagement:88,retention:82},title:'My Most Embarrassing Failure',reason:'Humor + relatable failure story drives shares.',transcript:"Okay this is embarrassing but I have to tell you. I literally pitched investors with the wrong slides. The WRONG company's slides.",yt:'My Most Embarrassing Failure #shorts',caption:'My Most Embarrassing Failure 😂\n\nSave this for later 📌'},
+];
+const hashtags=['#shorts','#viral','#startup','#entrepreneur','#business','#motivation'];
+const emojis='🔥 🚀 💯 🤯 👀';
+
+const state={active:'m1',duration:30,font:'Poppins',effect:'karaoke',color:'#FFFFFF',hl:'#FFD400',position:'bottom',bg:'semi',ar:'9:16',res:'1080p',fmt:'mp4'};
+const fontStack={'Poppins':"'Poppins',sans-serif",'Montserrat':"'Montserrat',sans-serif",'Bebas Neue':"'Bebas Neue',Impact,sans-serif",'Impact':"Impact,'Anton',sans-serif"};
+
+function fmt(s){const m=Math.floor(s/60),x=Math.floor(s%60);return m+':'+String(x).padStart(2,'0')}
+function scls(v){return v>=90?'s90':v>=75?'s75':v>=60?'s60':'slow'}
+function scol(v){return v>=90?'#34d399':v>=75?'#a3e635':v>=60?'#fbbf24':'#fb7185'}
+function m(){return moments.find(x=>x.id===state.active)}
+
+function show(id){document.getElementById('home').style.display=id==='home'?'block':'none';
+ document.getElementById('dash').style.display=id==='dash'?'block':'none';
+ document.getElementById('tab-home').classList.toggle('on',id==='home');
+ document.getElementById('tab-dash').classList.toggle('on',id==='dash');
+ if(id==='dash')render();window.scrollTo(0,0)}
+
+function ring(v,lab){const r=33,c=2*Math.PI*r,off=c-(v/100)*c,col=scol(v);
+ return `<div class="ring"><svg width="78" height="78"><circle cx="39" cy="39" r="${r}" stroke="rgba(255,255,255,.08)" stroke-width="7" fill="none"/><circle cx="39" cy="39" r="${r}" stroke="${col}" stroke-width="7" stroke-linecap="round" fill="none" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><div class="val" style="margin-top:-52px;margin-bottom:32px">${v}</div><div class="lab">${lab}</div></div>`}
+
+function pills(elId,items,key,labelFn){const el=document.getElementById(elId);
+ el.innerHTML=items.map(it=>`<button class="chip ${state[key]===it?'on':''}" onclick="set('${key}','${it}')">${labelFn?labelFn(it):it}</button>`).join('')}
+
+function set(key,val){state[key]=val;render()}
+
+function caps(){
+ const words=m().transcript.split(/\s+/).slice(0,4);
+ const box=document.getElementById('capbox');
+ const capsEl=document.getElementById('caps');
+ capsEl.className='caps '+state.position;
+ box.style.background=state.bg==='solid'?'rgba(0,0,0,.85)':state.bg==='semi'?'rgba(0,0,0,.45)':'transparent';
+ box.style.fontFamily=fontStack[state.font];
+ box.innerHTML=words.map((w,i)=>{
+   let anim='';
+   if(state.effect==='pop')anim=`animation:pop .5s ease ${i*.18}s infinite alternate`;
+   else if(state.effect==='bounce')anim=`animation:bounce .5s ease ${i*.18}s infinite alternate`;
+   else if(state.effect==='karaoke'||state.effect==='highlight')anim=`animation:hl 1.6s ease ${i*.18}s infinite`;
+   return `<span class="word" style="color:${state.color};--cap:${state.color};--hl:${state.hl};${anim}">${w}</span>`;
+ }).join('');
+}
+
+function render(){
+ // moments
+ document.getElementById('moments').innerHTML=moments.map((x,i)=>`
+   <button class="moment ${state.active===x.id?'active':''}" onclick="set('active','${x.id}')">
+     <div class="row"><span class="tag">#${i+1} · ${fmt(x.start)}–${fmt(x.end)}</span><span class="sc ${scls(x.scores.viral)}">${x.scores.viral}</span></div>
+     <div class="mtitle">${x.title}</div><div class="mreason">${x.reason}</div>
+   </button>`).join('');
+ // durations
+ pills('durations',[15,30,45,60],'duration',d=>d+'s');
+ // rings
+ const s=m().scores;
+ document.getElementById('rings').innerHTML=ring(s.viral,'Viral')+ring(s.hook,'Hook')+ring(s.engagement,'Engagement')+ring(s.retention,'Retention');
+ // transcript + content
+ document.getElementById('transcript').textContent=m().transcript;
+ document.getElementById('yt').textContent=m().yt;
+ document.getElementById('cap').textContent=m().caption;
+ document.getElementById('tags').innerHTML=hashtags.map(h=>`<span class="htag">${h}</span>`).join('');
+ document.getElementById('emoji').textContent=emojis;
+ // editor pills
+ pills('fonts',['Poppins','Montserrat','Bebas Neue','Impact'],'font');
+ pills('effects',['karaoke','bounce','pop','zoom','highlight'],'effect');
+ pills('positions',['top','middle','bottom'],'position');
+ pills('bgs',['transparent','semi','solid'],'bg');
+ pills('ar',['9:16','1:1','16:9'],'ar');
+ pills('res',['720p','1080p','4k'],'res');
+ pills('fmt',['mp4','mov'],'fmt',x=>x.toUpperCase());
+ // colors
+ const cols=['#FFFFFF','#FFD400','#22C55E','#EF4444'];
+ document.getElementById('colors').innerHTML=cols.map(c=>`<span class="swatch ${state.color===c?'on':''}" style="background:${c}" onclick="set('color','${c}')"></span>`).join('');
+ caps();
+}
+show('home');
+
+// ───────────── PWA: Android install support ─────────────
+// Register the service worker so the app is installable & works offline.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// Capture Android's install prompt and show our own button.
+let deferredPrompt = null;
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.classList.add('show');
+});
+async function installApp() {
+  if (!deferredPrompt) {
+    alert('To install on Android:\n\nOpen this page in Chrome → tap ⋮ menu → "Add to Home screen".');
+    return;
+  }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') installBtn.classList.remove('show');
+  deferredPrompt = null;
+}
+// Already installed? Hide the button.
+window.addEventListener('appinstalled', () => installBtn.classList.remove('show'));
+if (window.matchMedia('(display-mode: standalone)').matches) installBtn.classList.remove('show');
+
+// Support the PWA "share target": if YouTube shares a URL to the app, prefill it.
+(function prefillFromShare(){
+  const p = new URLSearchParams(location.search);
+  const shared = p.get('url') || p.get('text');
+  if (shared && /youtu\.?be/.test(shared)) {
+    const input = document.querySelector('.inputbar input');
+    if (input) input.value = shared.trim();
+  }
+})();
+</script>
+</body>
+</html>
